@@ -79,7 +79,7 @@ def sigma(u, p, vg_l, vg_c, vg_i, k, f0, s0, prm_HO):
     # Total Cauchy stress
     sigma_tot = (1.0 / J) * tauKirch
 
-    return Fe, sigma_elast, sigma_tot, C
+    return Fe, sigma_elast, sigma_tot, C, Ce
 
 # -----------------------------------------------------------------------------
 # Function to compute endometrial (uterine cavity) volume
@@ -149,7 +149,6 @@ def compute_uterine_volume(u, dx):
     # Convert from mm3 to m3
     return vol_L
 
-
 # -----------------------------------------------------------------------------
 # Function to solves the uterine growth and mechanics problem using a
 # variational formulation
@@ -178,11 +177,6 @@ def UterusSolve(fileOutput, file_results, mesh, bdry, materials, f0, s0, tinicia
     k_mola : Spring constants for different regions.
     alpha : Isotropic growth rate.
     nsteps : Number of time steps.
-
-    Returns
-    -------
-    vol_intra : Intrauterine volume at final step.
-    vol_utero : Uterine tissue volume at final step.
     """
 
     # -----------------------------------------------------------------------------
@@ -192,7 +186,7 @@ def UterusSolve(fileOutput, file_results, mesh, bdry, materials, f0, s0, tinicia
     P2v = VectorElement('CG', mesh.ufl_cell(), 2)
     # Scalar element - p, vgl, vgc, vgi:
     P1 = FiniteElement('CG', mesh.ufl_cell(), 1)
-    # Function space formed by elements (u,p,vg_l,vg_c,vg_i)
+    # Function space formed by elements (u, p, vg_l, vg_c, vg_i)
     W = FunctionSpace(mesh, MixedElement(P2v, P1, P1, P1, P1))
 
     # Create function space
@@ -258,11 +252,11 @@ def UterusSolve(fileOutput, file_results, mesh, bdry, materials, f0, s0, tinicia
     I4 = inner(Ce*f0,f0)     # Longitudinal fiber invariant
     I6 = inner(Ce*s0,s0)     # Circumferential fiber invariant
 
-    # Subplus function: returns variable if >=0, else 0
-    subplus = lambda var : conditional(ge(var, 0.0), var, 0.0)
-    
     # Material constants
     c_cvx, c, c_1, c_2, zeta1 = prm_Holzapfel 
+
+    # Subplus function: returns variable if >=0, else 0
+    subplus = lambda var : conditional(ge(var, 0.0), var, 0.0)
 
     # Second Piola-Kirchhoff stress tensor for elastic deformation
     # Body: k=0, Cervix: k=1
@@ -334,7 +328,6 @@ def UterusSolve(fileOutput, file_results, mesh, bdry, materials, f0, s0, tinicia
             + dot(k_peri_post*u, v)*ds(70)    # Posterior spring forces
             + dot(k_peri_pelv*u, v)*ds(80)    # Pelvic spring forces
             + hydpress*q*dx )                 # Incompressibility constraint
-
 
     # -------------------------------------------------------------------------
     # Growth problem: initialize growth variables
@@ -450,8 +443,10 @@ def UterusSolve(fileOutput, file_results, mesh, bdry, materials, f0, s0, tinicia
         # Compute stresses, fiber stretches, and other post-processing quantities
         # -------------------------------------------------------------------------
 
-        # Compute elastic deformation gradient, elastic and total Cauchy stress, total C
-        Fe, sig_e, sig_t, Ct = Sigma(uaux, paux, vglaux, vgcaux, vgiaux, k, f0, s0, prm_Holzapfel)  
+        # Compute elastic deformation gradient, elastic and total Cauchy stress, 
+        # total C, elastic C
+        Fe, sig_e, sig_t, Ct, Ce = sigma(uaux, paux, vglaux, vgcaux, vgiaux, 
+                                         k, f0, s0, prm_Holzapfel)  
 
         # Project and save elastic Cauchy stress
         sigmaE_proj = project(sig_e, TensorFunctionSpace(mesh, "DG", 0))
@@ -548,3 +543,5 @@ def UterusSolve(fileOutput, file_results, mesh, bdry, materials, f0, s0, tinicia
     file_results.close()
     tempo_final = time.time()
     print(f"Total execution time: {(tempo_final - tempo_inicial)/60.0} minutes")
+
+    return

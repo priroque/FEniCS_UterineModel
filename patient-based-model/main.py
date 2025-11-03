@@ -1,10 +1,8 @@
 import solver as uterus
-import numpy as np
 from dolfin import *
 from fenics import *
 import ldrb
 import time
-import ufl
 
 # -----------------------------------------------------------------------------
 # Simulation targeting gestational week 33.57142857 - Visit 4
@@ -24,7 +22,7 @@ iup = 0.001747
 # Cervix parameter - Reference: Fernandez et al. (2016)        
 c_cvx = 0.3715    
 
-# Material parameters - Reference: Sharifimajd et al.
+# Material parameters - Reference: Sharifimajd, Thore, and Stalhand (2016)
 c = 0.06               # 60 kPa = 6 N/cm2 = 0.06 N/mm2
 c_1 = 0.006            # 6 kPa = 0.6 N/cm2 = 0.006 N/mm2
 c_2 = 1.0              # Dimensionless
