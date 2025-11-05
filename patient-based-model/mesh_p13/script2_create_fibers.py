@@ -6,6 +6,7 @@
 import ldrb
 from dolfin import *
 
+
 # Convert from gmsh mesh to fenics
 meshname = 'malha-2volumes-ascii'
 mesh, ffun, markers = ldrb.gmsh2dolfin(meshname + ".msh")
